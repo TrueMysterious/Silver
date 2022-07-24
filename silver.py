@@ -74,7 +74,7 @@ for key in arg_dict:
 	core.memory.global_vars[key] = arg_dict[key]
 
 flat_targets = ','.join(targets)
-hostfile = f'-iL input_file if args.input_file else ""'
+hostfile = f'-iL {input_file if args.input_file else ""}'
 host = f' {flat_targets} ' if not args.input_file else ' '
 
 use_cpe = (method == 'software')
@@ -110,10 +110,8 @@ for host, data in cached_hosts.items():
 	if data.get('ports', False):
 		exclude.append(host)
 
-count = 0
-for host in master_db:
-	for port in master_db[host]:
-		count += 1
+
+count = sum(len(master_db[host]) for host in master_db)
 
 print(f'{run} {count} services to fingerprint')
 
