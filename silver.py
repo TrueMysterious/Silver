@@ -116,8 +116,7 @@ count = sum(len(master_db[host]) for host in master_db)
 print(f'{run} {count} services to fingerprint')
 
 num_cpus = threads or psutil.cpu_count()
-if num_cpus > len(master_db):
-	num_cpus = len(master_db)
+num_cpus=max(len(master_db),num_cpus)
 
 if num_cpus > 1:
 	print(f'{run} Spawning {num_cpus} nmap instances in parallel')
