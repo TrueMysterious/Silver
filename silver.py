@@ -93,7 +93,7 @@ if not cached_db:
 
 exclude = [host for host in cached_db]
 if exclude:
-	exclude = f'--exclude {','.join(exclude)} '
+	exclude = f'--exclude {",".join(exclude)} '
 else:
 	exclude = ''
 
