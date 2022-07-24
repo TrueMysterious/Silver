@@ -121,7 +121,7 @@ num_cpus=max(len(master_db),num_cpus)
 if num_cpus > 1:
 	print(f'{run} Spawning {num_cpus} nmap instances in parallel')
 else:
-	print('{run} Spawning 1 nmap instance')
+	print(f'{run} Spawning 1 nmap instance')
 
 if num_cpus != 0:
 	print(f'{info} ETA: {count * 22/num_cpus} seconds ')
