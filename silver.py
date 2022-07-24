@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -15,12 +17,12 @@ from core.resolver import resolver
 from core.colors import run, bad, end, good, info, white
 from core.utils import notify, load_json, write_json, parse_masscan
 
-print('''
-\t%s𝘴𝘪𝘭𝘷𝘦𝘳%s
-''' % (white, end))
+print(f'''
+\t{white}𝘴𝘪𝘭𝘷𝘦𝘳{end}
+''')
 
 if os.geteuid() != 0:
-	quit('%s You need to run Silver a root!' % info)
+	quit(f'{info} You need to run Silver a root!')
 
 cwd = sys.path[0]
 
@@ -48,23 +50,23 @@ if targets:
 elif input_file:
 	target_name = input_file.split('/')[-1]
 else:
-	quit('%s No hosts to scan.' % bad)
+	quit(f'{bad} No hosts to scan.')
 
 if args.outname:
 	target_name = args.outname.split('/')[-1].split('.')[0]
 
-savefile = args.outname if args.outname else cwd + '/result-' + target_name + '.json'
-nmapfile = cwd + '/nmap-' + target_name + '.xml'
+savefile = f'{args.outname if args.outname else cwd}/result-{target_name}.json'
+nmapfile = f'{cwd}/nmap-{target_name}.xml'
 
 if input_file:
-	print('%s Resolving hostnames to IPs for masscan' % run)
+	print(f'{run} Resolving hostnames to IPs for masscan')
 	targets = resolver(input_file)
 
 cached_db = load_json(savefile)
 if args.use_shodan:
 	result = shodan(targets, cached_db)
 	write_json(savefile, result)
-	print('%s Output saved to %s' % (info, savefile))
+	print(f'{info} Output saved to {savefile}')
 	quit()
 
 arg_dict = vars(args)
@@ -72,10 +74,10 @@ for key in arg_dict:
 	core.memory.global_vars[key] = arg_dict[key]
 
 flat_targets = ','.join(targets)
-hostfile = '-iL ' + input_file if args.input_file else ''
-host = ' %s ' % flat_targets if not args.input_file else ' '
+hostfile = f'-iL input_file if args.input_file else ""'
+host = f' {flat_targets} ' if not args.input_file else ' '
 
-use_cpe = True if method == 'software' else False
+use_cpe = (method == 'software')
 
 ports_to_scan = '0-65535'
 if quick:
@@ -83,7 +85,7 @@ if quick:
 elif args.ports:
 	ports_to_scan = args.ports
 
-print('%s Deploying masscan' % run)
+print(f'{run} Deploying masscan')
 
 if not cached_db:
 	file = open(savefile, 'w+')
@@ -91,16 +93,16 @@ if not cached_db:
 
 exclude = [host for host in cached_db]
 if exclude:
-	exclude = ' --exclude ' + ','.join(exclude) + ' '
+	exclude = f'--exclude {','.join(exclude)} '
 else:
 	exclude = ''
 
-os.system('masscan %s -p%s --rate %i -oG %s %s >/dev/null 2>&1' % (flat_targets, ports_to_scan, args.rate, savefile, exclude))
+os.system(f'masscan {flat_targets} -p{ports_to_scan} --rate {args.rate} -oG {savefile} {exclude} >/dev/null 2>&1')
 master_db = parse_masscan(savefile)
 for host in cached_db:
 	master_db[host] = cached_db[host]
 write_json(savefile, master_db)
-print('%s Result saved to %s' % (info, savefile))
+print(f'{info} Result saved to {savefile}')
 
 exclude = []
 cached_hosts = load_json(savefile)
@@ -113,19 +115,19 @@ for host in master_db:
 	for port in master_db[host]:
 		count += 1
 
-print('%s %i services to fingerprint' % (run, count))
+print(f'{run} {count} services to fingerprint')
 
 num_cpus = threads or psutil.cpu_count()
 if num_cpus > len(master_db):
 	num_cpus = len(master_db)
 
 if num_cpus > 1:
-	print('%s Spawning %i nmap instances in parallel' % (run, num_cpus))
+	print(f'{run} Spawning {num_cpus} nmap instances in parallel')
 else:
-	print('%s Spawning 1 nmap instance' % run)
+	print('{run} Spawning 1 nmap instance')
 
 if num_cpus != 0:
-	print('%s ETA: %i seconds ' % (info, count * 22/num_cpus))
+	print(f'{info} ETA: {count * 22/num_cpus} seconds ')
 	pool = Pool(processes=num_cpus)
 
 	results = [pool.apply_async(pymap, args=(host, master_db[host], exclude, nmapfile)) for host in master_db]
@@ -141,9 +143,9 @@ if num_cpus != 0:
 
 write_json(savefile, master_db)
 
-print('%s Updated %s' % (info, savefile))
+print(f'{info} Updated {savefile}' )
 
-print('%s Looking for vulnerablilites' % run)
+print(f'{run} Looking for vulnerablilites')
 
 for ip in master_db:
 	for port in master_db[ip]['ports']:
@@ -155,12 +157,12 @@ for ip in master_db:
 			software = cpe
 		is_vuln = vulners(software, version, cpe=use_cpe)
 		if is_vuln:
-			message = '%s %s running on %s:%s is outdated' % (name, version, ip, port)
+			message = f'{name} {version} running on {ip}:{port} is outdated'
 			master_db[ip]['ports'][port]['vuln'] = True
-			notify('[Vuln] %s' % message)
-			print('%s %s' % (good, message))
+			notify(f'[Vuln] {message}')
+			print(f'{good} {message}')
 		else:
 			master_db[ip]['ports'][port]['vuln'] = False
 
 write_json(savefile, master_db)
-print('%s Scan completed' % good)
+print(f'{good} Scan completed')
